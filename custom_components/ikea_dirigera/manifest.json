@@ -1,0 +1,8 @@
+{
+    "domain": "ikea_dirigera",
+    "name": "Ikea Dirigera",
+    "version": "0.1.0",
+    "config_flow": true,
+    "integration_type": "hub",
+    "requirements": []
+}

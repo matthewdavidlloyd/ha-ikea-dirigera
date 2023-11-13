@@ -1,0 +1,15 @@
+{
+    "config": {
+        "flow_title": "Ikea Dirigera",
+        "step": {
+            "user": {
+                "data": {
+                    "ip_address": "IP Address"
+                }
+            },
+            "accept_challenge": {
+                "description": "Press Action button on hub before continuing"
+            }
+        }
+    }
+}
