@@ -7,7 +7,7 @@ from homeassistant.const import (CONF_IP_ADDRESS, CONF_TOKEN)
 from homeassistant.helpers.typing import ConfigType
 import homeassistant.helpers.device_registry as dr
 
-from .vendor.pydirigera.hub import Hub
+from .vendor.pydirigera.hub import HubAPI
 
 from .const import DOMAIN, PLATFORMS, CONF_HUB_ID
 
@@ -18,7 +18,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     return True
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    hub = Hub(entry.data[CONF_IP_ADDRESS], entry.data[CONF_TOKEN])
+    hub = HubAPI(entry.data[CONF_IP_ADDRESS], entry.data[CONF_TOKEN])
     hub_status = await hub.get_hub_status()
 
     device_registry = dr.async_get(hass)

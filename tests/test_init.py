@@ -2,7 +2,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
 
 from custom_components.ikea_dirigera.const import DOMAIN
-from custom_components.ikea_dirigera.vendor.pydirigera.hub import Hub
+from custom_components.ikea_dirigera.vendor.pydirigera.hub import HubAPI
 
 from unittest.mock import MagicMock, patch
 
@@ -17,7 +17,7 @@ async def test_async_setup_with_no_config(hass: HomeAssistant) -> None:
     assert hass.config_entries.async_entries() == []
 
 @patch.object(
-        Hub,
+        HubAPI,
         "get_hub_status",
         return_value={
             "attributes": {

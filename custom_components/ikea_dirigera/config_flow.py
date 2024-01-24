@@ -7,7 +7,7 @@ from homeassistant import config_entries, exceptions
 from homeassistant.const import (CONF_IP_ADDRESS, CONF_TOKEN)
 
 from .vendor.pydirigera.auth import (ALPHABET, CODE_LENGTH, random_code, send_challenge, get_token)
-from .vendor.pydirigera.hub import Hub
+from .vendor.pydirigera.hub import HubAPI
 
 from .const import CONF_HUB_ID, DOMAIN
 
@@ -42,7 +42,7 @@ class IkeaDirigeraConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if info is not None:
             self._token = await self.hass.async_add_executor_job(get_token, self._ip_address, self._code, self._code_verifier)
-            hub = Hub(self._ip_address, self._token)
+            hub = HubAPI(self._ip_address, self._token)
             hub_status = await hub.get_hub_status()
             hub_id = hub_status["id"]
             await self.async_set_unique_id(hub_id)

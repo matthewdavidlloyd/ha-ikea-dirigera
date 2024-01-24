@@ -5,7 +5,7 @@ from aiohttp import ClientSession
 
 _LOGGER = logging.getLogger(__name__)
 
-class Hub:
+class HubAPI:
 
     _http_base_url: str
     _token: str
