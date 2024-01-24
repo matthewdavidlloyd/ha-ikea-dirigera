@@ -18,61 +18,74 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     hub_api: HubAPI = hass.data[DOMAIN][entry.entry_id]
 
     @callback
-    def async_add_environment_sensor(device_id: str, device_info: DeviceInfo):
-        temperature_sensor = IkeaDirigeraTemperatureSensorEntity(hub_api, device_id, device_info)
-        humidity_sensor = IkeaDirigeraHumiditySensorEntity(hub_api, device_id, device_info)
+    def async_add_environment_sensor(device_id: str, device_name: str, **kwargs):
+        temperature_sensor = IkeaDirigeraTemperatureSensorEntity(hub_api, hub_id, device_id, device_name, **kwargs)
+        humidity_sensor = IkeaDirigeraHumiditySensorEntity(hub_api, hub_id, device_id, device_name, **kwargs)
         async_add_entities([temperature_sensor, humidity_sensor])
 
     device_details = await hub_api.get_devices()
     for device_detail in device_details:
         device_type = device_detail["deviceType"]
         device_id = device_detail["id"]
-        device_info = DeviceInfo(
-            identifiers={
-                (DOMAIN, device_id)
-            },
-            via_device=(DOMAIN, hub_id),
-            manufacturer=device_detail["attributes"]["manufacturer"],
-            model=device_detail["attributes"]["model"],
-            serial_number=device_detail["attributes"]["serialNumber"],
-            name=device_detail["attributes"]["customName"],
-            sw_version=device_detail["attributes"]["firmwareVersion"],
-        )
+        device_name = device_detail["attributes"]["customName"]
 
         if device_type == "environmentSensor":
-            async_add_environment_sensor(device_id, device_info)
+            async_add_environment_sensor(
+                device_id,
+                device_name,
+                device_manufacturer = device_detail["attributes"]["manufacturer"],
+                device_model = device_detail["attributes"]["model"],
+                device_serial_number = device_detail["attributes"]["serialNumber"],
+                device_software_version = device_detail["attributes"]["firmwareVersion"] 
+            )
 
 
 class IkeaDirigeraSensorEntity(IkeaDirigeraEntity, SensorEntity):
-    entity_description = SensorEntityDescription(
-        key="ikea_dirigera_sensor",
-        has_entity_name=True,
-        name=None
-    )
 
     _api: DeviceAPI 
 
-    def __init__(self, hub_api: HubAPI, id: str, sensor_device_class: SensorDeviceClass, device_info: DeviceInfo):
-        super().__init__(f"{id}_{sensor_device_class}", device_info)
-        self._attr_device_class = sensor_device_class
-        self._api = DeviceAPI(hub_api, id)
+    def __init__(
+            self,
+            hub_api: HubAPI,
+            hub_id: str,
+            device_id: str,
+            device_name: str,
+            device_manufacturer: str = None,
+            device_model: str = None,
+            device_serial_number: str = None,
+            device_software_version: str = None  
+        ):
+            super().__init__(hub_id, device_id, device_name, device_manufacturer, device_model, device_serial_number, device_software_version)
+            self._api = DeviceAPI(hub_api, device_id)
+
+    @property
+    def unique_id(self) -> str:
+        return f"{self._device_serial_number}-{self._attr_device_class}"
+
+    @property
+    def name(self) -> str:
+        return f"""{self._device_name} {self._attr_device_class.replace("_", " ")}"""
+
+    @property
+    def entity_description(self) -> SensorEntity:
+        return SensorEntityDescription(key="ikea_dirigera_sensor", has_entity_name=True, name=None)
 
 
-class IkeaDirigeraTemperatureSensorEntity(IkeaDirigeraSensorEntity): 
-    def __init__(self, hub_api: HubAPI, id: str, device_info: DeviceInfo):
-        super().__init__(hub_api, id, SensorDeviceClass.TEMPERATURE, device_info)
-
+class IkeaDirigeraTemperatureSensorEntity(IkeaDirigeraSensorEntity):
+    
+    _attr_device_class = SensorDeviceClass.TEMPERATURE
+    _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+        
     async def async_update(self) -> None:
         status = await self._api.get_status()
         self._attr_native_value = status["attributes"]["currentTemperature"]
-        self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
 
 
-class IkeaDirigeraHumiditySensorEntity(IkeaDirigeraSensorEntity): 
-    def __init__(self, hub_api: HubAPI, id: str, device_info: DeviceInfo):
-        super().__init__(hub_api, id, SensorDeviceClass.HUMIDITY, device_info)
+class IkeaDirigeraHumiditySensorEntity(IkeaDirigeraSensorEntity):
+    
+    _attr_device_class = SensorDeviceClass.HUMIDITY
+    _attr_native_unit_of_measurement = PERCENTAGE
 
     async def async_update(self) -> None:
         status = await self._api.get_status()
         self._attr_native_value = status["attributes"]["currentRH"]
-        self._attr_native_unit_of_measurement = PERCENTAGE
