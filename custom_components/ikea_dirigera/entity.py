@@ -1,57 +1,55 @@
-from typing import Optional
-
 from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.entity import Entity
+
+from aiodirigera.device import Device
+from aiodirigera.hub import Hub
 
 from .const import DOMAIN
 
 
-class IkeaDirigeraEntity(Entity):
-
+class IkeaDirigeraEntity:
     _hub_id: str
-    _device_id: str
-    _device_name: str
-    _device_manufacturer: Optional[str]
-    _device_model: Optional[str]
-    _device_serial_number: Optional[str]
-    _device_software_version: Optional[str]
+    _hub: Hub
+    _delegate: Device
 
-    def __init__(
-        self,
-        hub_id: str,
-        device_id: str,
-        device_name: str,
-        device_manufacturer: str = None,
-        device_model: str = None,
-        device_serial_number: str = None,
-        device_software_version: str = None  
-    ):
+    def __init__(self, hub_id: str, hub: Hub, device: Device):
         self._hub_id = hub_id
-        self._device_id = device_id
-        self._device_name = device_name
-        self._device_manufacturer = device_manufacturer
-        self._device_model = device_model
-        self._device_serial_number = device_serial_number
-        self._device_software_version = device_software_version
+        self._hub = hub
+        self._delegate = device
 
     @property
     def unique_id(self) -> str:
-        return self._device_serial_number
+        return self._delegate.serial_number
 
     @property
     def name(self) -> str:
-        return self._device_name
+        return self._delegate.name
 
     @property
     def device_info(self) -> DeviceInfo:
         return DeviceInfo(
             identifiers={
-                (DOMAIN, self._device_id)
+                (DOMAIN, self._delegate.id)
             },
             via_device=(DOMAIN, self._hub_id),
-            manufacturer=self._device_manufacturer,
-            model=self._device_model,
-            name=self._device_name,
-            serial_number=self._device_serial_number,
-            sw_version=self._device_software_version,
+            manufacturer=self._delegate.manufacturer,
+            model=self._delegate.model,
+            name=self._delegate.name,
+            serial_number=self._delegate.serial_number,
+            sw_version=self._delegate.software_version,
         )
+
+    async def async_update(self) -> None:
+        await self._delegate.update_state()
+
+
+class IkeaDirigeraToggleEntity(IkeaDirigeraEntity):
+
+    @property
+    def is_on(self) -> bool:
+        return self._delegate.is_on
+
+    async def async_turn_on(self) -> None:
+        await self._delegate.turn_on()
+
+    async def async_turn_off(self) -> None:
+        await self._delegate.turn_off()
