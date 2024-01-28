@@ -5,5 +5,7 @@
     "config_flow": true,
     "integration_type": "hub",
     "iot_class": "local_polling",
-    "requirements": []
+    "requirements": [
+        "aiodirigera==0.0.5"
+    ]
 }

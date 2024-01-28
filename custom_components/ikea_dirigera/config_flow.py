@@ -1,17 +1,21 @@
-import logging
 from typing import Optional
 
 import voluptuous as vol
 
-from homeassistant import config_entries, exceptions
+from homeassistant import config_entries
 from homeassistant.const import (CONF_IP_ADDRESS, CONF_TOKEN)
 
-from .vendor.pydirigera.auth import (ALPHABET, CODE_LENGTH, random_code, send_challenge, get_token)
-from .vendor.pydirigera.hub import HubAPI
+from aiodirigera.auth import (
+    ALPHABET,
+    CODE_LENGTH,
+    random_code,
+    send_challenge,
+    get_token
+)
+from aiodirigera.hub import Hub
 
 from .const import CONF_HUB_ID, DOMAIN
 
-_LOGGER = logging.getLogger(__name__)
 
 # TODO: Add error handling
 # TODO: Unique ids: https://developers.home-assistant.io/docs/config_entries_config_flow_handler#unique-ids
@@ -23,13 +27,11 @@ class IkeaDirigeraConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     _code: str
     _token: str
 
-    async def async_step_user(self, info: Optional[dict]=None):
-        _LOGGER.debug("async_step_user: %s", info)
-
+    async def async_step_user(self, info: Optional[dict] = None):
         if info is not None:
             self._ip_address = info[CONF_IP_ADDRESS]
             self._code_verifier = random_code(ALPHABET, CODE_LENGTH)
-            self._code = await self.hass.async_add_executor_job(send_challenge, self._ip_address, self._code_verifier)
+            self._code = await send_challenge(self._ip_address, self._code_verifier)
             return await self.async_step_accept_challenge()
 
         return self.async_show_form(
@@ -37,14 +39,12 @@ class IkeaDirigeraConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema({vol.Required(CONF_IP_ADDRESS): str})
         )
 
-    async def async_step_accept_challenge(self, info: Optional[dict]=None):
-        _LOGGER.debug("async_step_accept_challenge: %s", info)
-
+    async def async_step_accept_challenge(self, info: Optional[dict] = None):
         if info is not None:
-            self._token = await self.hass.async_add_executor_job(get_token, self._ip_address, self._code, self._code_verifier)
-            hub = HubAPI(self._ip_address, self._token)
-            hub_status = await hub.get_hub_status()
-            hub_id = hub_status["id"]
+            self._token = await get_token(self._ip_address, self._code, self._code_verifier)
+            hub = Hub(self._ip_address, self._token)
+            hub_status = await hub.get_status()
+            hub_id = hub_status.id
             await self.async_set_unique_id(hub_id)
             self._abort_if_unique_id_configured(hub_id)
 
