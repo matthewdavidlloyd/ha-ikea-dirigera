@@ -2,7 +2,8 @@ from homeassistant.core import callback, HomeAssistant
 from homeassistant.components.light import (
     LightEntity,
     LightEntityDescription,
-    ATTR_BRIGHTNESS
+    ATTR_BRIGHTNESS,
+    ColorMode
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -40,6 +41,8 @@ async def async_setup_entry(
 
 
 class IkeaDirigeraLightEntity(IkeaDirigeraToggleEntity, LightEntity):
+    _attr_color_mode = ColorMode.BRIGHTNESS
+    _attr_supported_color_modes = [ColorMode.ONOFF, ColorMode.BRIGHTNESS]
 
     @property
     def entity_description(self) -> LightEntityDescription:
@@ -51,11 +54,11 @@ class IkeaDirigeraLightEntity(IkeaDirigeraToggleEntity, LightEntity):
 
     @property
     def brightness(self) -> int:
-        percentage_to_ranged_value(BRIGHTNESS_SCALE, self._delegate.brightness)
+        return percentage_to_ranged_value(BRIGHTNESS_SCALE, self._delegate.brightness)
 
     async def async_turn_on(self, **kwargs) -> None:
         if ATTR_BRIGHTNESS in kwargs:
-            await self._delegate.set_light_level(
+            await self._delegate.set_brightness(
                 ranged_value_to_percentage(
                     BRIGHTNESS_SCALE,
                     kwargs[ATTR_BRIGHTNESS]

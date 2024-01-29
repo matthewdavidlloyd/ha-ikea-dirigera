@@ -56,6 +56,10 @@ class IkeaDirigeraSensorEntity(IkeaDirigeraEntity, SensorEntity):
     def unique_id(self) -> str:
         return f"{super().unique_id}_{self._attr_device_class}"
 
+    @property
+    def name(self) -> str:
+        return f"""{super().name} {self._attr_device_class.replace("_", " ").title()}"""
+
 
 class IkeaDirigeraTemperatureSensorEntity(IkeaDirigeraSensorEntity):
     _attr_device_class = SensorDeviceClass.TEMPERATURE
