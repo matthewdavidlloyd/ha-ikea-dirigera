@@ -6,6 +6,6 @@
     "integration_type": "hub",
     "iot_class": "local_polling",
     "requirements": [
-        "aiodirigera==0.0.5"
+        "aiodirigera==0.0.6"
     ]
 }
